@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetPulse OS — Wi-Fi Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0D1117;
+  --bg2: #0A0E14;
+  --surface: #161B22;
+  --surface2: #1C2330;
+  --surface3: #21262D;
+  --surface4: #262D38;
+  --accent: #00C896;
+  --accent2: #00A07A;
+  --accent3: #007A5C;
+  --accent-rgb: 0,200,150;
+  --glow: rgba(0,200,150,0.18);
+  --glow2: rgba(0,200,150,0.08);
+  --glow3: rgba(0,200,150,0.04);
+  --text: #E6EDF3;
+  --text2: #8B949E;
+  --text3: #484F58;
+  --red: #FF4D6A;
+  --red-rgb: 255,77,106;
+  --yellow: #F0A500;
+  --blue: #4493F8;
+  --blue-rgb: 68,147,248;
+  --purple: #9B6DFF;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.1);
+  --radius: 14px;
+  --radius2: 10px;
+  --sidebar-w: 248px;
+  --topbar-h: 64px;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface4);border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent3)}
+select option{background:var(--surface2);color:var(--text)}
+input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px var(--surface3) inset!important;-webkit-text-fill-color:var(--text)!important}
+
+/* ═══════════════════════════════════════ AUTH ══════════════════════════════════ */
+#auth-screen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--bg);transition:opacity .5s,visibility .5s}
+#auth-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+
+.auth-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.auth-particle{position:absolute;border-radius:50%;animation:floatParticle linear infinite}
+@keyframes floatParticle{0%{transform:translateY(100vh) rotate(0deg);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-100px) rotate(720deg);opacity:0}}
+
+.auth-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,200,150,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,150,.03) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+.auth-radial{position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(0,200,150,.07) 0%,transparent 65%);pointer-events:none}
+
+.auth-card{position:relative;background:var(--surface);border:1px solid var(--border2);border-radius:22px;padding:44px 40px 36px;width:440px;max-width:96vw;box-shadow:0 0 80px rgba(0,200,150,.1),0 40px 80px rgba(0,0,0,.5);animation:authReveal .7s cubic-bezier(.16,1,.3,1) both}
+@keyframes authReveal{from{opacity:0;transform:translateY(40px) scale(.96)}to{opacity:1;transform:none}}
+
+.auth-header{text-align:center;margin-bottom:30px}
+.auth-logo-ring{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 0 30px var(--glow),0 8px 24px rgba(0,0,0,.3)}
+.auth-title{font-size:24px;font-weight:800;background:linear-gradient(135deg,var(--accent),#7DFFD6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.5px}
+.auth-sub{font-size:12px;color:var(--text3);margin-top:4px;letter-spacing:.5px}
+
+.tab-switcher{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:4px;margin-bottom:26px;gap:4px}
+.tab-btn{flex:1;padding:9px;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);background:transparent;transition:all .25s;letter-spacing:.2px}
+.tab-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0D1117;box-shadow:0 0 20px var(--glow)}
+
+.auth-form{display:flex;flex-direction:column;gap:14px}
+.auth-form.hidden{display:none}
+
+.fgroup{display:flex;flex-direction:column;gap:5px}
+.flabel{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.8px;text-transform:uppercase}
+.finput{background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius2);padding:12px 14px;color:var(--text);font-size:14px;font-family:'Poppins',sans-serif;transition:border-color .2s,box-shadow .2s;outline:none;width:100%}
+.finput:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow2)}
+.finput::placeholder{color:var(--text3)}
+
+.btn-auth{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0D1117;border:none;border-radius:var(--radius2);padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;transition:all .25s;box-shadow:0 4px 20px var(--glow);letter-spacing:.3px;width:100%;margin-top:4px}
+.btn-auth:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,200,150,.4)}
+.btn-auth:active{transform:translateY(0)}
+
+.auth-err{background:rgba(var(--red-rgb),.1);border:1px solid rgba(var(--red-rgb),.3);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--red);display:none}
+.auth-err.show{display:block}
+.auth-foot{font-size:11.5px;color:var(--text3);text-align:center;margin-top:6px}
+.auth-foot span{color:var(--accent);cursor:pointer;font-weight:600}
+
+.auth-demo{margin-top:16px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:11.5px;color:var(--text2);text-align:center;line-height:1.7}
+.auth-demo strong{color:var(--accent);font-family:var(--font-mono)}
+
+/* ═══════════════════════════════════════ APP SHELL ═════════════════════════════ */
+#app{display:flex;min-height:100vh}
+#app.hidden{display:none}
+
+/* ═══════════════════════════════════════ SIDEBAR ═══════════════════════════════ */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform .3s cubic-bezier(.16,1,.3,1)}
+.sidebar-head{padding:22px 18px 18px;border-bottom:1px solid var(--border)}
+.sidebar-brand{display:flex;align-items:center;gap:11px}
+.brand-icon{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 18px var(--glow)}
+.brand-name{font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--accent),#7DFFD6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.4px}
+.brand-badge{font-size:9px;font-weight:700;color:var(--accent);background:var(--glow);border:1px solid rgba(0,200,150,.25);border-radius:4px;padding:1px 5px;letter-spacing:.5px;margin-left:2px}
+
+.sidebar-nav{flex:1;padding:14px 12px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.nav-sec{font-size:9.5px;font-weight:700;color:var(--text3);letter-spacing:1.4px;text-transform:uppercase;padding:10px 10px 6px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:var(--radius2);cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;transition:all .2s;border:1px solid transparent;user-select:none;position:relative}
+.nav-item:hover{background:var(--surface3);color:var(--text)}
+.nav-item.active{background:var(--glow);color:var(--accent);border-color:rgba(0,200,150,.2)}
+.nav-item .nav-badge{margin-left:auto;background:var(--red);color:#fff;border-radius:99px;font-size:10px;font-weight:700;padding:1px 7px;font-family:var(--font-mono)}
+.nav-item svg{flex-shrink:0;opacity:.85}
+.nav-item.active svg{opacity:1}
+
+.sidebar-footer{padding:14px 12px;border-top:1px solid var(--border)}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:var(--radius2);margin-bottom:8px;background:var(--surface2)}
+.sidebar-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#0D1117;flex-shrink:0;border:2px solid rgba(0,200,150,.3)}
+.sidebar-uinfo{flex:1;min-width:0}
+.sidebar-uname{font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-urole{font-size:10px;color:var(--text3)}
+.btn-signout{width:100%;display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:var(--radius2);cursor:pointer;color:var(--red);font-size:13px;font-weight:600;background:rgba(var(--red-rgb),.07);border:1px solid rgba(var(--red-rgb),.15);font-family:'Poppins',sans-serif;transition:all .2s}
+.btn-signout:hover{background:rgba(var(--red-rgb),.14);box-shadow:0 0 20px rgba(var(--red-rgb),.18);transform:translateX(2px)}
+
+/* ═══════════════════════════════════════ MAIN ══════════════════════════════════ */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;background:var(--bg)}
+
+/* ═══════════════════════════════════════ TOPBAR ════════════════════════════════ */
+.topbar{height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-l{display:flex;align-items:center;gap:14px}
+.hamburger{display:none;background:transparent;border:none;cursor:pointer;color:var(--text2);padding:6px;border-radius:8px;transition:all .2s}
+.hamburger:hover{background:var(--surface3);color:var(--text)}
+.topbar-title{font-size:15px;font-weight:700;color:var(--text)}
+.topbar-r{display:flex;align-items:center;gap:12px}
+
+.topbar-conn{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--text2);cursor:default}
+.pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulseDot 2s infinite}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.8)}}
+.pulse-dot.red{background:var(--red);box-shadow:0 0 8px var(--red)}
+.pulse-dot.yellow{background:var(--yellow);box-shadow:0 0 8px var(--yellow)}
+
+.topbar-notif-btn{position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px;cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center;transition:all .2s}
+.topbar-notif-btn:hover{background:var(--surface3);color:var(--text);box-shadow:0 0 14px var(--glow2)}
+.notif-dot{position:absolute;top:5px;right:5px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--surface);animation:pulseDot 1.5s infinite}
+
+.topbar-welcome{font-size:13px;color:var(--text2)}
+.topbar-welcome b{color:var(--accent);font-weight:700}
+.topbar-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#0D1117;cursor:pointer;border:2px solid rgba(0,200,150,.3);transition:box-shadow .2s;flex-shrink:0}
+.topbar-av:hover{box-shadow:0 0 18px var(--glow)}
+
+/* ═══════════════════════════════════════ PAGE CONTENT ══════════════════════════ */
+.content{padding:26px 28px;flex:1;animation:pageIn .35s ease both}
+@keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.page{display:none}
+.page.active{display:block}
+
+/* ═══════════════════════════════════════ TYPOGRAPHY ════════════════════════════ */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-title{font-size:14.5px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:10px}
+.sec-title::before{content:'';display:block;width:3px;height:18px;background:linear-gradient(to bottom,var(--accent),transparent);border-radius:99px;flex-shrink:0}
+.sec-count{background:var(--glow);color:var(--accent);border:1px solid rgba(0,200,150,.25);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700}
+
+/* ═══════════════════════════════════════ CARDS ═════════════════════════════════ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px}
+.card-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.card-title{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.card-body{padding:20px}
+
+/* ═══════════════════════════════════════ STAT GRID ════════════════════════════ */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:default}
+.stat-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,var(--glow3));opacity:0;transition:opacity .3s}
+.stat-card:hover{transform:translateY(-3px);box-shadow:0 10px 36px rgba(0,0,0,.25)}
+.stat-card:hover::after{opacity:1}
+.stat-icon-wrap{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0}
+.si-green{background:rgba(0,200,150,.12)}
+.si-blue{background:rgba(68,147,248,.12)}
+.si-yellow{background:rgba(240,165,0,.1)}
+.si-red{background:rgba(255,77,106,.1)}
+.si-purple{background:rgba(155,109,255,.12)}
+.stat-num{font-size:28px;font-weight:800;color:var(--text);font-family:var(--font-mono);line-height:1}
+.stat-lbl{font-size:12px;color:var(--text2);margin-top:3px}
+.stat-sub{font-size:11px;color:var(--accent);margin-top:6px;font-weight:600}
+
+/* ═══════════════════════════════════════ TABLE ═════════════════════════════════ */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--surface2);padding:11px 18px;text-align:left;font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:.9px;text-transform:uppercase;white-space:nowrap}
+thead th:first-child{border-radius:var(--radius2) 0 0 0}
+thead th:last-child{border-radius:0 var(--radius2) 0 0}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.015)}
+tbody td{padding:13px 18px;vertical-align:middle;color:var(--text)}
+
+/* ═══════════════════════════════════════ BADGES ════════════════════════════════ */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.bd{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.b-green{background:rgba(0,200,150,.12);color:var(--accent);border:1px solid rgba(0,200,150,.25)}
+.b-green .bd{background:var(--accent);box-shadow:0 0 6px var(--accent);animation:pulseDot 2s infinite}
+.b-blue{background:rgba(68,147,248,.12);color:var(--blue);border:1px solid rgba(68,147,248,.25)}
+.b-blue .bd{background:var(--blue)}
+.b-yellow{background:rgba(240,165,0,.1);color:var(--yellow);border:1px solid rgba(240,165,0,.2)}
+.b-yellow .bd{background:var(--yellow)}
+.b-grey{background:rgba(139,148,158,.1);color:var(--text2);border:1px solid rgba(139,148,158,.2)}
+.b-grey .bd{background:var(--text2)}
+.b-red{background:rgba(255,77,106,.1);color:var(--red);border:1px solid rgba(255,77,106,.2)}
+.b-red .bd{background:var(--red)}
+.b-purple{background:rgba(155,109,255,.12);color:var(--purple);border:1px solid rgba(155,109,255,.25)}
+
+/* ═══════════════════════════════════════ SIGNAL BARS ═══════════════════════════ */
+.sig-wrap{display:flex;align-items:center;gap:9px}
+.sig-bars{display:flex;align-items:flex-end;gap:2.5px;height:16px}
+.sig-bar{width:4px;border-radius:2px;background:var(--surface4)}
+.sig-bar:nth-child(1){height:5px}
+.sig-bar:nth-child(2){height:8px}
+.sig-bar:nth-child(3){height:11px}
+.sig-bar:nth-child(4){height:15px}
+.sig-bar.on-g{background:var(--accent)}
+.sig-bar.on-y{background:var(--yellow)}
+.sig-bar.on-r{background:var(--red)}
+.sig-pct{font-size:12px;color:var(--text2);font-family:var(--font-mono)}
+
+/* ═══════════════════════════════════════ BUTTONS ═══════════════════════════════ */
+.btn{padding:7px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'Poppins',sans-serif;transition:all .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn-g{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0D1117;box-shadow:0 2px 14px var(--glow)}
+.btn-g:hover{transform:translateY(-1px);box-shadow:0 5px 22px rgba(0,200,150,.35)}
+.btn-r{background:rgba(var(--red-rgb),.12);color:var(--red);border:1px solid rgba(var(--red-rgb),.2)}
+.btn-r:hover{background:rgba(var(--red-rgb),.2);box-shadow:0 2px 16px rgba(var(--red-rgb),.25)}
+.btn-b{background:rgba(var(--blue-rgb),.12);color:var(--blue);border:1px solid rgba(var(--blue-rgb),.2)}
+.btn-b:hover{background:rgba(var(--blue-rgb),.2);box-shadow:0 2px 16px rgba(var(--blue-rgb),.2)}
+.btn-ghost{background:var(--surface3);border:1px solid var(--border);color:var(--text2)}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-lg{padding:12px 26px;font-size:14px;border-radius:var(--radius2)}
+.btn-full{width:100%;justify-content:center}
+.btn-add{background:var(--surface3);border:1px dashed rgba(0,200,150,.35);border-radius:var(--radius2);padding:9px 16px;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;display:inline-flex;align-items:center;gap:7px;transition:all .2s}
+.btn-add:hover{background:var(--glow);border-style:solid}
+
+/* ═══════════════════════════════════════ SPEED CARDS ═══════════════════════════ */
+.speed-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.speed-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.speed-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.speed-card-bg{position:absolute;right:-20px;bottom:-20px;width:100px;height:100px;border-radius:50%;opacity:.07}
+.speed-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.speed-num{font-size:46px;font-weight:800;font-family:var(--font-mono);line-height:1}
+.speed-num.dn{color:var(--accent)}
+.speed-num.up{color:var(--blue)}
+.speed-num.ping{color:var(--yellow)}
+.speed-unit{font-size:14px;font-weight:500;color:var(--text2);margin-left:4px}
+.speed-bar-wrap{margin-top:16px}
+.speed-bar-labels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text3);margin-bottom:6px;font-family:var(--font-mono)}
+.speed-track{height:5px;background:var(--surface3);border-radius:99px;overflow:hidden}
+.speed-fill{height:100%;border-radius:99px;position:relative;overflow:hidden;transition:width 1.4s cubic-bezier(.25,1,.5,1)}
+.speed-fill.dn{background:linear-gradient(90deg,var(--accent3),var(--accent))}
+.speed-fill.up{background:linear-gradient(90deg,#1557B0,var(--blue))}
+.speed-fill.ping{background:linear-gradient(90deg,#A87200,var(--yellow))}
+.speed-fill::after{content:'';position:absolute;top:0;left:-100%;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:shimmer 2.2s infinite}
+@keyframes shimmer{to{left:100%}}
+.mini-chart{height:52px;display:flex;align-items:flex-end;gap:3px;margin-top:14px}
+.mc-bar{flex:1;border-radius:3px 3px 0 0;transition:height .3s ease,background .3s;min-height:4px;cursor:pointer}
+.mc-bar.mc-g{background:rgba(0,200,150,.25)}
+.mc-bar.mc-g.cur{background:linear-gradient(to top,var(--accent3),var(--accent))}
+.mc-bar.mc-b{background:rgba(68,147,248,.25)}
+.mc-bar.mc-b.cur{background:linear-gradient(to top,#1557B0,var(--blue))}
+
+/* ═══════════════════════════════════════ DEVICES ═══════════════════════════════ */
+.device-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.device-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;transition:transform .2s,box-shadow .2s,border-color .2s}
+.device-card:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.2);border-color:rgba(0,200,150,.2)}
+.device-icon-wrap{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:20px}
+.device-name{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:4px}
+.device-ip{font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-bottom:10px}
+
+/* ═══════════════════════════════════════ SUGGESTION BOX ════════════════════════ */
+.suggest-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:14px}
+.suggest-box.warn{border-color:rgba(240,165,0,.3);background:rgba(240,165,0,.04)}
+.suggest-box.good{border-color:rgba(0,200,150,.3);background:rgba(0,200,150,.04)}
+.suggest-box.err{border-color:rgba(255,77,106,.3);background:rgba(255,77,106,.04)}
+.sug-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.sug-title{font-size:13px;font-weight:700;margin-bottom:3px}
+.sug-desc{font-size:12px;color:var(--text2);line-height:1.6}
+
+/* ═══════════════════════════════════════ LOGS ══════════════════════════════════ */
+.log-item{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border);transition:background .15s}
+.log-item:last-child{border-bottom:none}
+.log-item:hover{background:rgba(255,255,255,.015)}
+.log-type-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.lti-login{background:rgba(0,200,150,.12)}
+.lti-logout{background:rgba(139,148,158,.1)}
+.lti-conn{background:rgba(68,147,248,.12)}
+.lti-disc{background:rgba(255,77,106,.1)}
+.lti-warn{background:rgba(240,165,0,.1)}
+.log-msg{flex:1;font-size:12.5px;color:var(--text);font-weight:500}
+.log-user{font-size:11px;color:var(--text3);margin-top:1px}
+.log-time{font-size:11px;color:var(--text3);font-family:var(--font-mono);flex-shrink:0}
+
+/* ═══════════════════════════════════════ ADMIN GRID ════════════════════════════ */
+.admin-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.admin-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.admin-col-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.admin-col-title{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px}
+.admin-col-body{max-height:340px;overflow-y:auto}
+.admin-row{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;transition:background .15s}
+.admin-row:last-child{border-bottom:none}
+.admin-row:hover{background:rgba(255,255,255,.02)}
+.ar-left{display:flex;align-items:center;gap:10px}
+.ar-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#0D1117;flex-shrink:0}
+.ar-name{font-size:13px;font-weight:600;color:var(--text)}
+.ar-meta{font-size:11px;color:var(--text3)}
+.ar-actions{display:flex;gap:5px}
+
+/* ═══════════════════════════════════════ SETTINGS ══════════════════════════════ */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.settings-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+.scard-title{font-size:13px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.srow{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
+.srow:last-child{border-bottom:none}
+.srow-lbl{font-size:13px;color:var(--text);font-weight:500}
+.srow-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.toggle{position:relative;width:42px;height:24px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;cursor:pointer;inset:0;background:var(--surface3);border:1px solid var(--border);border-radius:99px;transition:.3s}
+.toggle-track::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:var(--text3);border-radius:50%;transition:.3s}
+.toggle input:checked+.toggle-track{background:var(--glow);border-color:rgba(0,200,150,.3)}
+.toggle input:checked+.toggle-track::before{transform:translateX(18px);background:var(--accent);box-shadow:0 0 10px var(--glow)}
+
+/* ═══════════════════════════════════════ AI CHAT ═══════════════════════════════ */
+.chat-fab{position:fixed;bottom:28px;right:28px;z-index:200;width:52px;height:52px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px var(--glow),0 8px 32px rgba(0,0,0,.3);transition:all .3s;font-size:20px}
+.chat-fab:hover{transform:scale(1.1);box-shadow:0 6px 32px rgba(0,200,150,.5)}
+.chat-fab.open{border-radius:12px;transform:rotate(45deg)}
+
+.chat-panel{position:fixed;bottom:90px;right:28px;z-index:199;width:340px;max-height:480px;background:var(--surface);border:1px solid var(--border2);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;overflow:hidden;transition:all .35s cubic-bezier(.16,1,.3,1);opacity:0;visibility:hidden;transform:translateY(20px) scale(.95)}
+.chat-panel.open{opacity:1;visibility:visible;transform:none}
+.chat-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface2)}
+.chat-ai-av{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 14px var(--glow)}
+.chat-ai-name{font-size:13px;font-weight:700;color:var(--text)}
+.chat-ai-status{font-size:11px;color:var(--accent)}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:200px}
+.cmsg{max-width:85%;padding:10px 14px;border-radius:12px;font-size:12.5px;line-height:1.6;animation:msgIn .25s ease both}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.cmsg.ai{background:var(--surface2);color:var(--text);border-bottom-left-radius:4px;align-self:flex-start}
+.cmsg.user{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0D1117;font-weight:600;border-bottom-right-radius:4px;align-self:flex-end}
+.chat-input-row{padding:12px;border-top:1px solid var(--border);display:flex;gap:8px}
+.chat-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:9px 14px;color:var(--text);font-size:12.5px;font-family:'Poppins',sans-serif;outline:none}
+.chat-input:focus{border-color:var(--accent)}
+.chat-send{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:50%;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.chat-send:hover{transform:scale(1.1)}
+.chat-quick{display:flex;flex-wrap:wrap;gap:5px;padding:0 14px 10px}
+.cq-btn{background:var(--surface3);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-size:10.5px;color:var(--text2);cursor:pointer;font-family:'Poppins',sans-serif;transition:all .2s;white-space:nowrap}
+.cq-btn:hover{background:var(--glow);color:var(--accent);border-color:rgba(0,200,150,.3)}
+
+/* ═══════════════════════════════════════ NOTIFICATIONS ════════════════════════ */
+.notif-panel{position:fixed;top:72px;right:20px;z-index:150;width:300px;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.notif-item{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.35);pointer-events:auto;display:flex;align-items:flex-start;gap:10px;animation:notifIn .4s cubic-bezier(.16,1,.3,1) both;position:relative;overflow:hidden}
+@keyframes notifIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+.notif-item.leaving{animation:notifOut .35s ease forwards}
+@keyframes notifOut{to{opacity:0;transform:translateX(30px);height:0;margin:0;padding:0}}
+.notif-ico{font-size:18px;flex-shrink:0}
+.notif-title{font-size:12.5px;font-weight:700;color:var(--text)}
+.notif-desc{font-size:11.5px;color:var(--text2);margin-top:2px}
+.notif-progress{position:absolute;bottom:0;left:0;height:2px;background:var(--accent);border-radius:99px;animation:notifBar 4s linear forwards}
+@keyframes notifBar{from{width:100%}to{width:0%}}
+.notif-item.warn .notif-progress{background:var(--yellow)}
+.notif-item.err .notif-progress{background:var(--red)}
+.notif-close{position:absolute;top:8px;right:10px;cursor:pointer;color:var(--text3);font-size:14px;line-height:1;transition:color .2s}
+.notif-close:hover{color:var(--text)}
+
+/* ═══════════════════════════════════════ MODAL ═════════════════════════════════ */
+.modal-ov{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:all .25s}
+.modal-ov.open{opacity:1;visibility:visible}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:28px;width:420px;max-width:96vw;box-shadow:0 24px 80px rgba(0,0,0,.5);transform:scale(.95);transition:transform .25s}
+.modal-ov.open .modal{transform:scale(1)}
+.modal-title{font-size:15px;font-weight:800;margin-bottom:20px;color:var(--text)}
+.modal-footer{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+
+/* ═══════════════════════════════════════ TOAST ═════════════════════════════════ */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:9999;opacity:0;visibility:hidden;transition:all .35s cubic-bezier(.16,1,.3,1);min-width:260px;max-width:400px;pointer-events:none}
+.toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+.toast.ts-g{border-left:3px solid var(--accent)}
+.toast.ts-r{border-left:3px solid var(--red)}
+.toast.ts-y{border-left:3px solid var(--yellow)}
+.toast.ts-b{border-left:3px solid var(--blue)}
+.toast-ico{font-size:18px}
+.toast-txt{font-size:13px;color:var(--text);font-weight:500}
+
+/* ═══════════════════════════════════════ PASSWORD ══════════════════════════════ */
+.pw-field{display:flex;align-items:center;gap:8px}
+.pw-text{font-family:var(--font-mono);font-size:12px;letter-spacing:2px;color:var(--text2)}
+
+/* ═══════════════════════════════════════ SECURITY ALERT ════════════════════════ */
+.sec-alert{background:rgba(255,77,106,.07);border:1px solid rgba(255,77,106,.25);border-radius:var(--radius2);padding:12px 16px;font-size:12px;color:var(--red);display:flex;align-items:center;gap:10px;margin-bottom:14px}
+
+/* ═══════════════════════════════════════ SCANNER PULSE ════════════════════════ */
+.scanner-wrap{position:relative;display:flex;align-items:center;justify-content:center;margin:28px auto;width:120px;height:120px}
+.scanner-ring{position:absolute;border-radius:50%;border:2px solid rgba(0,200,150,.3);animation:scanRing 2s ease-out infinite}
+.scanner-ring:nth-child(1){width:40px;height:40px;animation-delay:0s}
+.scanner-ring:nth-child(2){width:70px;height:70px;animation-delay:.4s}
+.scanner-ring:nth-child(3){width:100px;height:100px;animation-delay:.8s}
+.scanner-ring:nth-child(4){width:130px;height:130px;animation-delay:1.2s}
+@keyframes scanRing{0%{opacity:1;transform:scale(.3)}100%{opacity:0;transform:scale(1)}}
+.scanner-center{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;z-index:1;box-shadow:0 0 20px var(--glow);animation:scanPulse 1s ease-in-out infinite alternate}
+@keyframes scanPulse{from{box-shadow:0 0 14px var(--glow)}to{box-shadow:0 0 28px rgba(0,200,150,.5)}}
+
+/* ═══════════════════════════════════════ RESPONSIVE ════════════════════════════ */
+.sidebar-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99}
+
+@media(max-width:1100px){.admin-cols{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.admin-cols{grid-template-columns:1fr}.speed-grid{grid-template-columns:1fr}.settings-grid{grid-template-columns:1fr}}
+@media(max-width:720px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-ov{display:block;pointer-events:none;opacity:0;transition:opacity .3s}
+  .sidebar-ov.show{pointer-events:auto;opacity:1}
+  .main{margin-left:0}
+  .hamburger{display:flex}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .content{padding:16px}
+  .topbar{padding:0 16px}
+  .topbar-welcome{display:none}
+  table{font-size:12px}
+  thead th,tbody td{padding:9px 12px}
+  .chat-panel{width:calc(100vw - 40px);right:20px;bottom:80px}
+  .device-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){.stat-grid{grid-template-columns:1fr}.speed-grid{grid-template-columns:1fr}.device-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ AUTH ══════════════════ -->
+<div id="auth-screen">
+  <div class="auth-particles" id="auth-particles"></div>
+  <div class="auth-grid"></div>
+  <div class="auth-radial"></div>
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo-ring">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M1.5 8.5C6 3.5 18 3.5 22.5 8.5" stroke="#0D1117" stroke-width="2.2" stroke-linecap="round"/><path d="M4.5 11.5C7.5 8 16.5 8 19.5 11.5" stroke="#0D1117" stroke-width="2.2" stroke-linecap="round"/><path d="M7.5 14.5C9.5 12 14.5 12 16.5 14.5" stroke="#0D1117" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="18" r="2" fill="#0D1117"/></svg>
+      </div>
+      <div class="auth-title">NetPulse OS</div>
+      <div class="auth-sub">NETWORK COMMAND CENTER v3.0</div>
+    </div>
+    <div class="tab-switcher">
+      <button class="tab-btn active" id="tab-l" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" id="tab-s" onclick="switchTab('signup')">Create Account</button>
+    </div>
+    <!-- Login -->
+    <div id="lform" class="auth-form">
+      <div id="lerr" class="auth-err"></div>
+      <div class="fgroup"><label class="flabel">Username</label><input class="finput" id="lu" type="text" placeholder="Enter username" autocomplete="username"></div>
+      <div class="fgroup"><label class="flabel">Password</label><input class="finput" id="lp" type="password" placeholder="Enter password" autocomplete="current-password"></div>
+      <button class="btn-auth" onclick="doLogin()">Sign In to Dashboard</button>
+      <div class="auth-foot">No account? <span onclick="switchTab('signup')">Create one free</span></div>
+    </div>
+    <!-- Signup -->
+    <div id="sform" class="auth-form hidden">
+      <div id="serr" class="auth-err"></div>
+      <div class="fgroup"><label class="flabel">Full Name</label><input class="finput" id="sn" type="text" placeholder="e.g. Daniel Okafor"></div>
+      <div class="fgroup"><label class="flabel">Username</label><input class="finput" id="su" type="text" placeholder="Choose a username"></div>
+      <div class="fgroup"><label class="flabel">Password</label><input class="finput" id="sp" type="password" placeholder="Min. 6 characters"></div>
+      <button class="btn-auth" onclick="doSignup()">Create Account</button>
+      <div class="auth-foot">Have an account? <span onclick="switchTab('login')">Sign In</span></div>
+    </div>
+    <div class="auth-demo">
+      🔑 Demo Admin: <strong>admin</strong> / <strong>admin123</strong><br>
+      Or create your own account above
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ APP ══════════════════ -->
+<div id="app" class="hidden">
+  <div class="sidebar-ov" id="sov" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M1.5 8.5C6 3.5 18 3.5 22.5 8.5" stroke="#0D1117" stroke-width="2.2" stroke-linecap="round"/><path d="M4.5 11.5C7.5 8 16.5 8 19.5 11.5" stroke="#0D1117" stroke-width="2.2" stroke-linecap="round"/><path d="M7.5 14.5C9.5 12 14.5 12 16.5 14.5" stroke="#0D1117" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="18" r="2" fill="#0D1117"/></svg>
+        </div>
+        <span class="brand-name">NetPulse</span>
+        <span class="brand-badge">OS</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-sec">Main</div>
+      <div class="nav-item active" id="ni-dashboard" onclick="goTo('dashboard')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>Dashboard
+      </div>
+      <div class="nav-item" id="ni-networks" onclick="goTo('networks')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1.5 8.5C6 3.5 18 3.5 22.5 8.5"/><path d="M4.5 11.5C7.5 8 16.5 8 19.5 11.5"/><path d="M7.5 14.5C9.5 12 14.5 12 16.5 14.5"/><circle cx="12" cy="18" r="1.5" fill="currentColor"/></svg>Networks
+      </div>
+      <div class="nav-item" id="ni-speedtest" onclick="goTo('speedtest')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 12L17.5 6.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>Speed Test
+      </div>
+      <div class="nav-item" id="ni-devices" onclick="goTo('devices')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Devices
+      </div>
+      <div class="nav-item" id="ni-logs" onclick="goTo('logs')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Activity Logs <span class="nav-badge" id="logs-badge" style="display:none">0</span>
+      </div>
+      <div class="nav-item" id="ni-settings" onclick="goTo('settings')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings
+      </div>
+      <div class="nav-sec" id="admin-sec" style="display:none">Admin</div>
+      <div class="nav-item" id="ni-admin" onclick="goTo('admin')" style="display:none">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Admin Panel
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sb-av">U</div>
+        <div class="sidebar-uinfo">
+          <div class="sidebar-uname" id="sb-name">User</div>
+          <div class="sidebar-urole" id="sb-role">Member</div>
+        </div>
+      </div>
+      <button class="btn-signout" onclick="doSignout()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-l">
+        <button class="hamburger" onclick="toggleSidebar()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-title" id="tb-title">Dashboard</div>
+      </div>
+      <div class="topbar-r">
+        <div class="topbar-conn"><div class="pulse-dot" id="conn-dot"></div><span id="conn-name">Scanning...</span></div>
+        <div class="topbar-notif-btn" onclick="toggleNotifPanel()" title="Notifications">
+          <div class="notif-dot" id="notif-dot" style="display:none"></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <div class="topbar-welcome">Welcome, <b id="tb-name">User</b></div>
+        <div class="topbar-av" id="tb-av">U</div>
+      </div>
+    </header>
+
+    <!-- PAGES -->
+    <div class="content">
+
+      <!-- ▸ DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrap si-green"><svg width="18" height="18" fill="none" stroke="#00C896" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M1.5 8.5C6 3.5 18 3.5 22.5 8.5"/><path d="M4.5 11.5C7.5 8 16.5 8 19.5 11.5"/><path d="M7.5 14.5C9.5 12 14.5 12 16.5 14.5"/><circle cx="12" cy="18" r="1.5" fill="#00C896"/></svg></div>
+            <div class="stat-num" id="ds-nets">0</div><div class="stat-lbl">Saved Networks</div>
+            <div class="stat-sub" id="ds-conn-status">No connection</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap si-blue"><svg width="18" height="18" fill="none" stroke="#4493F8" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 12L17.5 6.5"/><circle cx="12" cy="12" r="1.5" fill="#4493F8"/></svg></div>
+            <div class="stat-num" id="ds-dl">—</div><div class="stat-lbl">Download Speed</div>
+            <div class="stat-sub" style="color:var(--blue)">Mbps</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap si-yellow"><svg width="18" height="18" fill="none" stroke="#F0A500" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
+            <div class="stat-num" id="ds-ul">—</div><div class="stat-lbl">Upload Speed</div>
+            <div class="stat-sub" style="color:var(--yellow)">Mbps</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap si-purple"><svg width="18" height="18" fill="none" stroke="#9B6DFF" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <div class="stat-num" id="ds-devs">0</div><div class="stat-lbl">Connected Devices</div>
+            <div class="stat-sub" style="color:var(--purple)">on network</div>
+          </div>
+        </div>
+
+        <!-- Suggestions -->
+        <div id="suggestions-area"></div>
+
+        <!-- Networks quick -->
+        <div class="sec-hdr">
+          <div class="sec-title">Your Networks</div>
+          <button class="btn-add" onclick="openAddModal()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Network</button>
+        </div>
+        <div class="card">
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Network</th><th>Status</th><th>Signal</th><th>Security</th><th>Action</th></tr></thead>
+            <tbody id="dash-nets-tbody"><tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text3);font-size:13px">No networks saved yet.</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ▸ NETWORKS -->
+      <div class="page" id="page-networks">
+        <!-- Scanner -->
+        <div class="sec-hdr"><div class="sec-title">Network Scanner</div>
+          <button class="btn btn-g" id="scan-btn" onclick="runScan()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1.5 8.5C6 3.5 18 3.5 22.5 8.5"/><path d="M4.5 11.5C7.5 8 16.5 8 19.5 11.5"/><path d="M7.5 14.5C9.5 12 14.5 12 16.5 14.5"/><circle cx="12" cy="18" r="1.5" fill="currentColor"/></svg>Scan Now</button>
+        </div>
+        <div class="card" id="scanner-card">
+          <div class="card-body" style="text-align:center;padding:40px 20px">
+            <div class="scanner-wrap" id="scanner-anim" style="display:none">
+              <div class="scanner-ring"></div><div class="scanner-ring"></div><div class="scanner-ring"></div><div class="scanner-ring"></div>
+              <div class="scanner-center">📶</div>
+            </div>
+            <div id="scan-idle">
+              <div style="font-size:40px;margin-bottom:12px">📡</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Click "Scan Now" to detect nearby networks</div>
+            </div>
+            <div id="scan-results" style="display:none"></div>
+          </div>
+        </div>
+
+        <div class="sec-hdr" style="margin-top:8px"><div class="sec-title">Saved Networks</div><button class="btn-add" onclick="openAddModal()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Network</button></div>
+        <div class="card">
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Network Name</th><th>Status</th><th>Signal</th><th>Security</th><th>Action</th></tr></thead>
+            <tbody id="nets-tbody"><tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text3)">No saved networks.</td></tr></tbody>
+          </table></div>
+        </div>
+
+        <!-- Saved passwords -->
+        <div class="sec-hdr"><div class="sec-title">Saved Wi-Fi Details</div></div>
+        <div class="sec-alert"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Passwords are encrypted and only visible on your device. Never shared with other users.</div>
+        <div class="card">
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Network</th><th>Password</th><th>Security</th><th>Saved</th><th>Actions</th></tr></thead>
+            <tbody id="saved-tbody"><tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text3)">No saved credentials.</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ▸ SPEED TEST -->
+      <div class="page" id="page-speedtest">
+        <div class="sec-hdr"><div class="sec-title">Speed Test</div>
+          <button class="btn btn-g btn-lg" id="speed-btn" onclick="runSpeedTest()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 12L17.5 6.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>Run Speed Test
+          </button>
+        </div>
+        <div class="speed-grid">
+          <div class="speed-card">
+            <div class="speed-card-bg" style="background:var(--accent)"></div>
+            <div class="speed-label">⬇ Download</div>
+            <div><span class="speed-num dn" id="sp-dl">—</span><span class="speed-unit">Mbps</span></div>
+            <div class="speed-bar-wrap">
+              <div class="speed-bar-labels"><span>0</span><span>50</span><span>100+</span></div>
+              <div class="speed-track"><div class="speed-fill dn" id="sp-dl-bar" style="width:0%"></div></div>
+            </div>
+            <div class="mini-chart" id="mc-dl"></div>
+          </div>
+          <div class="speed-card">
+            <div class="speed-card-bg" style="background:var(--blue)"></div>
+            <div class="speed-label">⬆ Upload</div>
+            <div><span class="speed-num up" id="sp-ul">—</span><span class="speed-unit">Mbps</span></div>
+            <div class="speed-bar-wrap">
+              <div class="speed-bar-labels"><span>0</span><span>50</span><span>100+</span></div>
+              <div class="speed-track"><div class="speed-fill up" id="sp-ul-bar" style="width:0%"></div></div>
+            </div>
+            <div class="mini-chart" id="mc-ul"></div>
+          </div>
+        </div>
+        <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card">
+            <div class="stat-icon-wrap si-yellow"><svg width="18" height="18" fill="none" stroke="#F0A500" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="stat-num" id="sp-ping" style="color:var(--yellow)">—</div>
+            <div class="stat-lbl">Ping (ms)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap si-green"><svg width="18" height="18" fill="none" stroke="#00C896" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <div class="stat-num" id="sp-avg-dl" style="color:var(--accent)">—</div>
+            <div class="stat-lbl">Avg. Download</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap si-red"><svg width="18" height="18" fill="none" stroke="#FF4D6A" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="stat-num" id="sp-loss" style="color:var(--red)">—</div>
+            <div class="stat-lbl">Packet Loss</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ▸ DEVICES -->
+      <div class="page" id="page-devices">
+        <div class="sec-hdr"><div class="sec-title">Connected Devices</div>
+          <button class="btn btn-ghost" onclick="refreshDevices()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Refresh</button>
+        </div>
+        <div class="device-grid" id="device-grid"></div>
+      </div>
+
+      <!-- ▸ LOGS -->
+      <div class="page" id="page-logs">
+        <div class="sec-hdr"><div class="sec-title">Activity Logs</div>
+          <button class="btn btn-r" onclick="clearLogs()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Clear Logs</button>
+        </div>
+        <div class="card"><div id="logs-list"><div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No activity logged yet.</div></div></div>
+      </div>
+
+      <!-- ▸ SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="sec-hdr"><div class="sec-title">Settings</div></div>
+        <div class="settings-grid">
+          <div class="settings-card">
+            <div class="scard-title"><svg width="15" height="15" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</div>
+            <div class="fgroup" style="margin-bottom:12px"><label class="flabel">Display Name</label><input class="finput" type="text" id="set-name"></div>
+            <div class="fgroup" style="margin-bottom:16px"><label class="flabel">Username</label><input class="finput" type="text" id="set-user" disabled style="opacity:.5"></div>
+            <button class="btn btn-g btn-full" onclick="saveProfile()">Save Profile</button>
+          </div>
+          <div class="settings-card">
+            <div class="scard-title"><svg width="15" height="15" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Security</div>
+            <div class="fgroup" style="margin-bottom:12px"><label class="flabel">Current Password</label><input class="finput" type="password" id="set-cpw"></div>
+            <div class="fgroup" style="margin-bottom:16px"><label class="flabel">New Password</label><input class="finput" type="password" id="set-npw"></div>
+            <button class="btn btn-full" style="background:linear-gradient(135deg,var(--red),#C0392B);color:#fff;border:none;border-radius:var(--radius2);padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;box-shadow:0 4px 20px rgba(255,77,106,.3)" onclick="changePw()">Update Password</button>
+          </div>
+          <div class="settings-card">
+            <div class="scard-title"><svg width="15" height="15" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Preferences</div>
+            <div class="srow"><div><div class="srow-lbl">Auto-connect saved networks</div><div class="srow-sub">Connect automatically when in range</div></div><label class="toggle"><input type="checkbox" checked id="pref-ac"><span class="toggle-track"></span></label></div>
+            <div class="srow"><div><div class="srow-lbl">Show signal strength</div><div class="srow-sub">Visual bars in network list</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-track"></span></label></div>
+            <div class="srow"><div><div class="srow-lbl">Smart suggestions</div><div class="srow-sub">Warn about weak or better networks</div></div><label class="toggle"><input type="checkbox" checked id="pref-sug"><span class="toggle-track"></span></label></div>
+            <div class="srow"><div><div class="srow-lbl">Activity logging</div><div class="srow-sub">Track connect/disconnect events</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-track"></span></label></div>
+          </div>
+          <div class="settings-card">
+            <div class="scard-title"><svg width="15" height="15" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>System Info</div>
+            <div class="srow"><div class="srow-lbl">Version</div><span style="font-size:12px;font-family:var(--font-mono);color:var(--accent)">v3.0.0</span></div>
+            <div class="srow"><div class="srow-lbl">Build</div><span style="font-size:12px;font-family:var(--font-mono);color:var(--text2)">2026.03.23</span></div>
+            <div class="srow"><div class="srow-lbl">Status</div><span class="badge b-green"><span class="bd"></span>Active</span></div>
+            <div class="srow" style="border-bottom:none"><div class="srow-lbl">Security</div><span class="badge b-blue">Encrypted</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ▸ ADMIN -->
+      <div class="page" id="page-admin">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-icon-wrap si-green"><svg width="18" height="18" fill="none" stroke="#00C896" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="stat-num" id="ad-total-u">0</div><div class="stat-lbl">Total Users</div><div class="stat-sub">registered</div></div>
+          <div class="stat-card"><div class="stat-icon-wrap si-blue"><svg width="18" height="18" fill="none" stroke="#4493F8" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="stat-num" id="ad-active-u">0</div><div class="stat-lbl">Active Users</div><div class="stat-sub">online now</div></div>
+          <div class="stat-card"><div class="stat-icon-wrap si-yellow"><svg width="18" height="18" fill="none" stroke="#F0A500" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M1.5 8.5C6 3.5 18 3.5 22.5 8.5"/><path d="M4.5 11.5C7.5 8 16.5 8 19.5 11.5"/><path d="M7.5 14.5C9.5 12 14.5 12 16.5 14.5"/><circle cx="12" cy="18" r="1.5" fill="#F0A500"/></svg></div><div class="stat-num" id="ad-total-n">0</div><div class="stat-lbl">Total Networks</div><div class="stat-sub">system-wide</div></div>
+          <div class="stat-card"><div class="stat-icon-wrap si-red"><svg width="18" height="18" fill="none" stroke="#FF4D6A" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="stat-num" id="ad-logs-c">0</div><div class="stat-lbl">Log Entries</div><div class="stat-sub">activity total</div></div>
+        </div>
+        <div class="admin-cols" id="admin-cols"></div>
+        <!-- Full logs table -->
+        <div class="sec-hdr"><div class="sec-title">System Activity Logs</div></div>
+        <div class="card"><div id="admin-logs-list"></div></div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div>
+
+<!-- ADD NETWORK MODAL -->
+<div class="modal-ov" id="add-modal">
+  <div class="modal">
+    <div class="modal-title">Add Wi-Fi Network</div>
+    <div class="fgroup" style="margin-bottom:12px"><label class="flabel">Network Name (SSID)</label><input class="finput" id="m-ssid" placeholder="e.g. Home_5G"></div>
+    <div class="fgroup" style="margin-bottom:12px"><label class="flabel">Password</label><input class="finput" id="m-pw" type="password" placeholder="Wi-Fi password"></div>
+    <div class="fgroup" style="margin-bottom:12px"><label class="flabel">Security Type</label>
+      <select class="finput" id="m-sec"><option value="WPA3">WPA3 (Recommended)</option><option value="WPA2" selected>WPA2</option><option value="WEP">WEP (Legacy)</option><option value="Open">Open (No Password)</option></select>
+    </div>
+    <div class="fgroup"><label class="flabel">Signal Strength (%)</label><input class="finput" id="m-sig" type="number" min="1" max="100" placeholder="75"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('add-modal')">Cancel</button>
+      <button class="btn btn-g" onclick="saveNetwork()">Save Network</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION PANEL -->
+<div class="notif-panel" id="notif-panel"></div>
+
+<!-- AI CHAT -->
+<button class="chat-fab" id="chat-fab" onclick="toggleChat()" title="AI Assistant">🤖</button>
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-head">
+    <div class="chat-ai-av">🤖</div>
+    <div><div class="chat-ai-name">NetPulse AI</div><div class="chat-ai-status">● Always online</div></div>
+  </div>
+  <div class="chat-msgs" id="chat-msgs">
+    <div class="cmsg ai">Hi! I'm your NetPulse AI assistant. Ask me anything about your network! 👋</div>
+  </div>
+  <div class="chat-quick" id="chat-quick">
+    <button class="cq-btn" onclick="chatAsk('Why is my Wi-Fi slow?')">Why is Wi-Fi slow?</button>
+    <button class="cq-btn" onclick="chatAsk('Which network is best?')">Best network?</button>
+    <button class="cq-btn" onclick="chatAsk('How to improve signal?')">Improve signal</button>
+    <button class="cq-btn" onclick="chatAsk('What is WPA3?')">What is WPA3?</button>
+  </div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chat-input" placeholder="Ask about your network..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="chat-send" onclick="sendChat()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D1117" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><div class="toast-ico" id="t-ico"></div><div class="toast-txt" id="t-txt"></div></div>
+
+<script>
+// ════════════════════════════════ HELPERS ════════════════════════════════════
+const $ = id => document.getElementById(id);
+const rand = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
+const randF = (min,max,d=1) => (Math.random()*(max-min)+min).toFixed(d);
+
+// Simple encrypt (XOR + base64 - for demo, not production crypto)
+function enc(str){ try{ return btoa(unescape(encodeURIComponent(str))); }catch{return str;} }
+function dec(str){ try{ return decodeURIComponent(escape(atob(str))); }catch{return str;} }
+
+function store(){ return JSON.parse(localStorage.getItem('np3')||'{}'); }
+function save(d){ localStorage.setItem('np3',JSON.stringify(d)); }
+
+function initStore(){
+  let d = store();
+  if(!d.users) d.users={};
+  if(!d.logs) d.logs=[];
+  if(!d.failedLogins) d.failedLogins={};
+  // seed admin
+  if(!d.users.admin){
+    d.users.admin={ name:'Administrator', pw:enc('admin123'), role:'admin', nets:[], disabled:false, created:Date.now() };
+  }
+  save(d);
+  return d;
+}
+
+// ════════════════════════════════ AUTH ═══════════════════════════════════════
+let CU = null; // current user
+
+function switchTab(t){
+  $('tab-l').classList.toggle('active',t==='login');
+  $('tab-s').classList.toggle('active',t==='signup');
+  $('lform').classList.toggle('hidden',t!=='login');
+  $('sform').classList.toggle('hidden',t!=='signup');
+}
+
+function doLogin(){
+  const u=$('lu').value.trim().toLowerCase(), p=$('lp').value;
+  const d=initStore(); const err=$('lerr');
+  if(!u||!p){err.textContent='Enter username and password.';err.classList.add('show');return;}
+  // brute force protection
+  const fails=d.failedLogins[u]||{count:0,last:0};
+  if(fails.count>=5 && Date.now()-fails.last<60000){err.textContent='Too many failed attempts. Wait 1 minute.';err.classList.add('show');return;}
+  const user=d.users[u];
+  if(!user||dec(user.pw)!==p){
+    fails.count=(fails.count||0)+1; fails.last=Date.now();
+    d.failedLogins[u]=fails; save(d);
+    err.textContent=`Invalid credentials. (${5-fails.count} attempts left)`;err.classList.add('show');return;
+  }
+  if(user.disabled){err.textContent='Account is disabled. Contact admin.';err.classList.add('show');return;}
+  // reset fails
+  d.failedLogins[u]={count:0,last:0}; save(d);
+  err.classList.remove('show');
+  CU={username:u,...user};
+  addLog('login',u,`${user.name||u} signed in`);
+  enterApp();
+}
+
+function doSignup(){
+  const n=$('sn').value.trim(), u=$('su').value.trim().toLowerCase(), p=$('sp').value;
+  const err=$('serr'); const d=initStore();
+  if(!n||!u||!p){err.textContent='All fields required.';err.classList.add('show');return;}
+  if(u.length<3){err.textContent='Username min 3 chars.';err.classList.add('show');return;}
+  if(p.length<6){err.textContent='Password min 6 chars.';err.classList.add('show');return;}
+  if(d.users[u]){err.textContent='Username already taken.';err.classList.add('show');return;}
+  err.classList.remove('show');
+  d.users[u]={name:n,pw:enc(p),role:'user',nets:[],disabled:false,created:Date.now()};
+  save(d);
+  CU={username:u,name:n,pw:enc(p),role:'user',nets:[],disabled:false};
+  addLog('login',u,`${n} created account & signed in`);
+  enterApp();
+}
+
+function doSignout(){
+  addLog('logout',CU.username,`${CU.name||CU.username} signed out`);
+  CU=null;
+  $('app').classList.add('hidden');
+  $('auth-screen').classList.remove('hidden');
+  $('lu').value=''; $('lp').value='';
+  goTo('dashboard');
+  speedHistory={dl:[],ul:[]};
+}
+
+function enterApp(){
+  $('auth-screen').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  const n=CU.name||CU.username;
+  $('tb-name').textContent=n; $('tb-av').textContent=n[0].toUpperCase();
+  $('sb-name').textContent=n; $('sb-av').textContent=n[0].toUpperCase();
+  $('sb-role').textContent=CU.role==='admin'?'Administrator':'Member';
+  $('set-name').value=n; $('set-user').value=CU.username;
+  // admin nav
+  const isAdmin=CU.role==='admin';
+  $('ni-admin').style.display=isAdmin?'':'none';
+  $('admin-sec').style.display=isAdmin?'':'none';
+  goTo('dashboard');
+  loadDevices();
+  setTimeout(()=>runSpeedTestSilent(),800);
+  setTimeout(()=>fireNotif('info','📶','Network Scan Complete','3 networks found nearby'),2000);
+  updateLogsBadge();
+}
+
+// ════════════════════════════════ NAVIGATION ═════════════════════════════════
+const PAGE_TITLES={dashboard:'Dashboard',networks:'Networks',speedtest:'Speed Test',devices:'Devices',logs:'Activity Logs',settings:'Settings',admin:'Admin Panel'};
+
+function goTo(p){
+  if(p==='admin'&&(!CU||CU.role!=='admin')){showToast('r','🔒','Admin access denied');return;}
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  const pe=$('page-'+p), ne=$('ni-'+p);
+  if(pe){pe.classList.add('active');pe.style.animation='none';requestAnimationFrame(()=>{pe.style.animation=''});}
+  if(ne) ne.classList.add('active');
+  $('tb-title').textContent=PAGE_TITLES[p]||p;
+  closeSidebar();
+  if(p==='dashboard'||p==='networks') renderNetworks();
+  if(p==='admin') renderAdmin();
+  if(p==='logs') renderLogs();
+  if(p==='devices') loadDevices();
+  if(p==='settings'){$('set-name').value=CU?.name||'';$('set-user').value=CU?.username||'';}
+}
+
+function toggleSidebar(){$('sidebar').classList.toggle('open');$('sov').classList.toggle('show');}
+function closeSidebar(){$('sidebar').classList.remove('open');$('sov').classList.remove('show');}
+
+// ════════════════════════════════ NETWORKS ═══════════════════════════════════
+function getUserNets(){
+  const d=store(); return d.users[CU.username]?.nets||[];
+}
+function setUserNets(nets){
+  const d=store();
+  if(d.users[CU.username]) d.users[CU.username].nets=nets;
+  save(d);
+}
+
+function sigBars(pct){
+  const lvl=pct>=75?4:pct>=50?3:pct>=30?2:1;
+  const cls=pct>=60?'on-g':pct>=35?'on-y':'on-r';
+  let b='';
+  for(let i=1;i<=4;i++) b+=`<div class="sig-bar ${i<=lvl?cls:''}"></div>`;
+  return `<div class="sig-wrap"><div class="sig-bars">${b}</div><span class="sig-pct">${pct}%</span></div>`;
+}
+
+function statusBadge(s){
+  const m={connected:`<span class="badge b-green"><span class="bd"></span>Connected</span>`,
+           saved:`<span class="badge b-blue"><span class="bd"></span>Saved</span>`,
+           available:`<span class="badge b-yellow"><span class="bd"></span>Available</span>`,
+           disconnected:`<span class="badge b-grey"><span class="bd"></span>Disconnected</span>`};
+  return m[s]||m.saved;
+}
+
+function renderNetworks(){
+  const nets=getUserNets();
+  if($('ds-nets')) $('ds-nets').textContent=nets.length;
+  const conn=nets.find(n=>n.status==='connected');
+  const connName=conn?conn.ssid:'No connection';
+  $('conn-name').textContent=connName;
+  $('conn-dot').className=conn?'pulse-dot':'pulse-dot red';
+  if($('ds-conn-status')) $('ds-conn-status').textContent=conn?`Connected to ${conn.ssid}`:'No active connection';
+
+  // Build smart suggestions
+  buildSuggestions(nets,conn);
+
+  const makeRows=(nets,hasAction)=>nets.length===0?
+    `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text3);font-size:13px">No networks saved.</td></tr>`:
+    nets.map((n,i)=>`
+      <tr>
+        <td><strong style="font-size:13px">${n.ssid}</strong></td>
+        <td>${statusBadge(n.status)}</td>
+        <td>${sigBars(n.signal)}</td>
+        <td><span class="badge b-grey">${n.security||'WPA2'}</span></td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          ${n.status==='connected'
+            ?`<button class="btn btn-r" onclick="disconnectNet(${i})">Disconnect</button>`
+            :`<button class="btn btn-g" onclick="connectNet(${i})">Connect</button>`}
+        </td>
+      </tr>`).join('');
+
+  ['dash-nets-tbody','nets-tbody'].forEach(id=>{const el=$(id);if(el)el.innerHTML=makeRows(nets);});
+
+  // Saved passwords
+  const sb=$('saved-tbody');
+  if(sb) sb.innerHTML=nets.length===0?
+    `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text3)">No saved credentials.</td></tr>`:
+    nets.map((n,i)=>`
+      <tr>
+        <td><strong>${n.ssid}</strong></td>
+        <td><div class="pw-field"><span class="pw-text" id="pw-${i}">••••••••</span></div></td>
+        <td><span class="badge b-grey">${n.security||'WPA2'}</span></td>
+        <td style="color:var(--text3);font-size:11px;font-family:var(--font-mono)">${n.saved?new Date(n.saved).toLocaleDateString():'-'}</td>
+        <td style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-ghost" onclick="togglePw(${i},'${n.pw||''}')">Show</button>
+          <button class="btn btn-r" onclick="removeNet(${i})">Remove</button>
+        </td>
+      </tr>`).join('');
+}
+
+function connectNet(i){
+  const nets=getUserNets();
+  nets.forEach((n,idx)=>{n.status=idx===i?'connected':(n.status==='connected'?'saved':n.status);});
+  setUserNets(nets);
+  addLog('connect',CU.username,`${CU.name||CU.username} connected to ${nets[i].ssid}`);
+  renderNetworks();
+  showToast('g','📶',`Connected to ${nets[i].ssid}`);
+  fireNotif('success','🔗',`Connected`,`Now on ${nets[i].ssid}`);
+}
+
+function disconnectNet(i){
+  const nets=getUserNets();
+  const nm=nets[i].ssid;
+  nets[i].status='saved';
+  setUserNets(nets);
+  addLog('disconnect',CU.username,`${CU.name||CU.username} disconnected from ${nm}`);
+  renderNetworks();
+  showToast('y','📴',`Disconnected from ${nm}`);
+  fireNotif('warn','⚠️','Connection Lost',`Disconnected from ${nm}`);
+}
+
+function removeNet(i){
+  const nets=getUserNets(); const nm=nets[i].ssid;
+  nets.splice(i,1); setUserNets(nets);
+  renderNetworks();
+  showToast('r','🗑️',`Removed ${nm}`);
+}
+
+const pwVisible={};
+function togglePw(i,encodedPw){
+  const el=$(`pw-${i}`); if(!el)return;
+  pwVisible[i]=!pwVisible[i];
+  el.textContent=pwVisible[i]?dec(encodedPw):'••••••••';
+  const btn=el.closest('tr')?.querySelector('.btn-ghost');
+  if(btn) btn.textContent=pwVisible[i]?'Hide':'Show';
+}
+
+// ════════════════════════════════ SMART SUGGESTIONS ══════════════════════════
+function buildSuggestions(nets, conn){
+  const area=$('suggestions-area'); if(!area)return;
+  const boxes=[];
+  if(conn){
+    if(conn.signal<40) boxes.push({type:'warn',icon:'⚠️',iconBg:'rgba(240,165,0,.12)',title:'Weak Signal',desc:`Your connection to <strong>${conn.ssid}</strong> has a weak signal (${conn.signal}%). Consider moving closer to the router.`});
+    const better=nets.filter(n=>n.status!=='connected'&&n.signal>conn.signal+15);
+    if(better.length>0) boxes.push({type:'warn',icon:'💡',iconBg:'rgba(68,147,248,.12)',title:'Better Network Available',desc:`<strong>${better[0].ssid}</strong> has a stronger signal (${better[0].signal}%) than your current network.`});
+    if(conn.security==='WEP'||conn.security==='Open') boxes.push({type:'err',icon:'🔓',iconBg:'rgba(255,77,106,.12)',title:'Insecure Network',desc:`<strong>${conn.ssid}</strong> uses ${conn.security||'no'} encryption. Consider switching to WPA3 for better security.`});
+  } else if(nets.length>0){
+    const best=nets.reduce((a,b)=>a.signal>b.signal?a:b);
+    boxes.push({type:'good',icon:'📶',iconBg:'var(--glow)',title:'Best Available Network',desc:`<strong>${best.ssid}</strong> has the strongest signal (${best.signal}%). Click Connect to join.`});
+  }
+  area.innerHTML=boxes.map(b=>`
+    <div class="suggest-box ${b.type}">
+      <div class="sug-icon" style="background:${b.iconBg}">${b.icon}</div>
+      <div><div class="sug-title" style="color:${b.type==='err'?'var(--red)':b.type==='warn'?'var(--yellow)':'var(--accent)'}">${b.title}</div>
+      <div class="sug-desc">${b.desc}</div></div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════ SCANNER ════════════════════════════════════
+const FAKE_NETWORKS=[
+  {ssid:'HomeNet_5G',signal:92,security:'WPA3'},{ssid:'Office_WiFi',signal:78,security:'WPA2'},
+  {ssid:'CafeConnect',signal:55,security:'WPA2'},{ssid:'Galaxy_Hotspot',signal:40,security:'WPA2'},
+  {ssid:'FreeWifi_Public',signal:31,security:'Open'},{ssid:'Neighbor_2.4G',signal:22,security:'WPA2'},
+  {ssid:'IoT_Network',signal:68,security:'WPA3'},{ssid:'Guest_Network',signal:45,security:'WPA2'}
+];
+
+function runScan(){
+  const btn=$('scan-btn'); btn.disabled=true; btn.innerHTML='<span style="font-size:11px">Scanning...</span>';
+  $('scan-idle').style.display='none';
+  $('scan-results').style.display='none';
+  $('scanner-anim').style.display='flex';
+  setTimeout(()=>{
+    $('scanner-anim').style.display='none';
+    const found=FAKE_NETWORKS.sort(()=>Math.random()-.5).slice(0,rand(4,7));
+    $('scan-results').style.display='block';
+    $('scan-results').innerHTML=`
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:16px">Found ${found.length} networks</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Network Name</th><th>Signal</th><th>Security</th><th>Action</th></tr></thead>
+        <tbody>${found.map(n=>`
+          <tr>
+            <td><strong>${n.ssid}</strong></td>
+            <td>${sigBars(n.signal)}</td>
+            <td><span class="badge b-grey">${n.security}</span></td>
+            <td><button class="btn btn-g" onclick="addFromScan('${n.ssid}',${n.signal},'${n.security}')">+ Add</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>`;
+    btn.disabled=false;
+    btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1.5 8.5C6 3.5 18 3.5 22.5 8.5"/><path d="M4.5 11.5C7.5 8 16.5 8 19.5 11.5"/><path d="M7.5 14.5C9.5 12 14.5 12 16.5 14.5"/><circle cx="12" cy="18" r="1.5" fill="currentColor"/></svg>Scan Again';
+    fireNotif('success','📡','Scan Complete',`${found.length} networks detected nearby`);
+  },2800);
+}
+
+function addFromScan(ssid,signal,security){
+  const nets=getUserNets();
+  if(nets.find(n=>n.ssid===ssid)){showToast('y','ℹ️','Network already saved');return;}
+  nets.push({ssid,signal,security,status:'available',pw:'',saved:Date.now()});
+  setUserNets(nets);
+  renderNetworks();
+  showToast('g','✓',`"${ssid}" added to your networks`);
+}
+
+// ════════════════════════════════ ADD MODAL ══════════════════════════════════
+function openAddModal(){$('add-modal').classList.add('open');}
+function closeModal(id){$(id).classList.remove('open');}
+
+function saveNetwork(){
+  const ssid=$('m-ssid').value.trim(), pw=$('m-pw').value;
+  const sec=$('m-sec').value, sig=parseInt($('m-sig').value)||rand(50,90);
+  if(!ssid){showToast('r','⚠️','Network name required');return;}
+  const nets=getUserNets();
+  if(nets.find(n=>n.ssid===ssid)){showToast('y','ℹ️','Network already saved');return;}
+  nets.push({ssid,pw:enc(pw),security:sec,signal:Math.min(100,Math.max(1,sig)),status:'saved',saved:Date.now()});
+  setUserNets(nets);
+  renderNetworks();
+  closeModal('add-modal');
+  $('m-ssid').value='';$('m-pw').value='';$('m-sig').value='';
+  showToast('g','✓',`"${ssid}" saved successfully`);
+  addLog('connect',CU.username,`${CU.name||CU.username} saved network: ${ssid}`);
+}
+
+// ════════════════════════════════ SPEED TEST ═════════════════════════════════
+let speedHistory={dl:[],ul:[]};
+
+function runSpeedTestSilent(){
+  const dl=parseFloat(randF(25,95)); const ul=parseFloat(randF(10,45));
+  speedHistory.dl.push(dl); speedHistory.ul.push(ul);
+  if(speedHistory.dl.length>14){speedHistory.dl.shift();speedHistory.ul.shift();}
+  updateSpeedUI(dl,ul);
+}
+
+function runSpeedTest(){
+  const btn=$('speed-btn'); btn.disabled=true;
+  btn.innerHTML='<span class="spinner" style="width:14px;height:14px;border:2px solid rgba(13,17,23,.3);border-top-color:#0D1117;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span> Testing...';
+  let phase=0;
+  const phases=['Connecting to server...','Testing download...','Testing upload...','Calculating results...'];
+  const iv=setInterval(()=>{
+    phase++;
+    if(phase<phases.length) btn.innerHTML=`<span style="font-size:11px">${phases[phase]}</span>`;
+    if(phase>=phases.length){clearInterval(iv);}
+  },700);
+  setTimeout(()=>{
+    const dl=parseFloat(randF(30,95)); const ul=parseFloat(randF(12,50));
+    const ping=rand(8,45); const loss=Math.random()<.7?'0.0%':`${randF(.1,1.5)}%`;
+    speedHistory.dl.push(dl); speedHistory.ul.push(ul);
+    if(speedHistory.dl.length>14){speedHistory.dl.shift();speedHistory.ul.shift();}
+    updateSpeedUI(dl,ul,ping,loss,true);
+    btn.disabled=false;
+    btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 12L17.5 6.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>Run Speed Test';
+    addLog('connect',CU.username,`Speed test: ↓${dl} ↑${ul} Mbps, Ping ${ping}ms`);
+    showToast('g','⚡',`Test done: ↓${dl} / ↑${ul} Mbps`);
+  },3200);
+}
+
+function updateSpeedUI(dl,ul,ping,loss,full){
+  // stat cards on dashboard
+  if($('ds-dl')) $('ds-dl').textContent=dl;
+  if($('ds-ul')) $('ds-ul').textContent=ul;
+  // speed test page
+  ['sp-dl','sp-ul'].forEach((id,i)=>{const el=$(id);if(el)el.textContent=i===0?dl:ul;});
+  // bars
+  ['sp-dl-bar','sp-ul-bar'].forEach((id,i)=>{
+    const el=$(id); if(!el)return;
+    el.style.width='0%';
+    requestAnimationFrame(()=>setTimeout(()=>{el.style.width=Math.min((i===0?dl:ul),100)+'%';},60));
+  });
+  // mini charts
+  renderMC('mc-dl',speedHistory.dl,'g');
+  renderMC('mc-ul',speedHistory.ul,'b');
+  if(full){
+    if($('sp-ping')&&ping!==undefined) $('sp-ping').textContent=ping;
+    if($('sp-loss')&&loss!==undefined) $('sp-loss').textContent=loss;
+    const avgDl=(speedHistory.dl.reduce((a,b)=>a+b,0)/speedHistory.dl.length).toFixed(1);
+    if($('sp-avg-dl')) $('sp-avg-dl').textContent=avgDl;
+  }
+}
+
+function renderMC(id,data,type){
+  const el=$(id); if(!el||data.length<2)return;
+  const max=Math.max(...data,10);
+  el.innerHTML=data.map((v,i)=>{
+    const h=Math.max(6,Math.round((v/max)*48));
+    const cur=i===data.length-1;
+    return `<div class="mc-bar mc-${type}${cur?' cur':''}" style="height:${h}px"></div>`;
+  }).join('');
+}
+
+// ════════════════════════════════ DEVICES ════════════════════════════════════
+const DEVICE_TYPES=[
+  {icon:'💻',name:'MacBook Pro',type:'Laptop',ip:'192.168.1.2'},
+  {icon:'📱',name:'iPhone 15',type:'Phone',ip:'192.168.1.3'},
+  {icon:'📺',name:'Smart TV',type:'TV',ip:'192.168.1.4'},
+  {icon:'🎮',name:'PlayStation 5',type:'Console',ip:'192.168.1.5'},
+  {icon:'🔉',name:'Alexa Echo',type:'Speaker',ip:'192.168.1.6'},
+  {icon:'💻',name:'Dell Laptop',type:'Laptop',ip:'192.168.1.7'},
+  {icon:'📱',name:'Samsung Galaxy',type:'Phone',ip:'192.168.1.8'},
+  {icon:'🖨️',name:'HP Printer',type:'Printer',ip:'192.168.1.9'}
+];
+
+function loadDevices(){
+  const grid=$('device-grid'); if(!grid)return;
+  const cnt=rand(3,6);
+  const devices=DEVICE_TYPES.sort(()=>Math.random()-.5).slice(0,cnt);
+  if($('ds-devs')) $('ds-devs').textContent=cnt;
+  grid.innerHTML=devices.map((d,i)=>{
+    const active=Math.random()>.3;
+    return `
+    <div class="device-card" style="animation:pageIn ${.1+i*.08}s ease both;animation-delay:${i*.06}s">
+      <div class="device-icon-wrap" style="background:${active?'var(--glow)':'rgba(139,148,158,.1)'}">${d.icon}</div>
+      <div class="device-name">${d.name}</div>
+      <div class="device-ip">${d.ip}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="badge ${active?'b-green':'b-grey'}"><span class="bd"></span>${active?'Active':'Idle'}</span>
+        <span style="font-size:11px;color:var(--text3)">${d.type}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function refreshDevices(){loadDevices();showToast('b','🔄','Device list refreshed');}
+
+// ════════════════════════════════ LOGS ═══════════════════════════════════════
+const LOG_META={
+  login:{cls:'lti-login',icon:'👤'},logout:{cls:'lti-logout',icon:'🚪'},
+  connect:{cls:'lti-conn',icon:'🔗'},disconnect:{cls:'lti-disc',icon:'🔌'},
+  warn:{cls:'lti-warn',icon:'⚠️'}
+};
+
+function addLog(type,user,msg){
+  const d=store();
+  d.logs.unshift({type,user,msg,time:Date.now()});
+  if(d.logs.length>100) d.logs=d.logs.slice(0,100);
+  save(d);
+  updateLogsBadge();
+}
+
+function updateLogsBadge(){
+  const d=store(); const cnt=(d.logs||[]).length;
+  const badge=$('logs-badge');
+  if(badge){badge.textContent=cnt>99?'99+':cnt;badge.style.display=cnt>0?'':'none';}
+}
+
+function buildLogItem(l){
+  const m=LOG_META[l.type]||LOG_META.warn;
+  const t=new Date(l.time);
+  const ts=t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' '+t.toLocaleDateString([],{month:'short',day:'numeric'});
+  return `
+  <div class="log-item">
+    <div class="log-type-icon ${m.cls}">${m.icon}</div>
+    <div style="flex:1"><div class="log-msg">${l.msg}</div><div class="log-user">@${l.user}</div></div>
+    <div class="log-time">${ts}</div>
+  </div>`;
+}
+
+function renderLogs(){
+  const d=store(); const logs=d.logs||[];
+  const ll=$('logs-list');
+  if(ll) ll.innerHTML=logs.length===0?
+    `<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No activity logged yet.</div>`:
+    logs.map(buildLogItem).join('');
+}
+
+function clearLogs(){
+  const d=store(); d.logs=[];save(d);
+  renderLogs(); updateLogsBadge();
+  showToast('y','🗑️','Activity logs cleared');
+}
+
+// ════════════════════════════════ SETTINGS ═══════════════════════════════════
+function saveProfile(){
+  const n=$('set-name').value.trim();
+  if(!n){showToast('r','⚠️','Name cannot be empty');return;}
+  const d=store();
+  if(d.users[CU.username]){d.users[CU.username].name=n;save(d);}
+  CU.name=n;
+  $('tb-name').textContent=n;$('tb-av').textContent=n[0].toUpperCase();
+  $('sb-name').textContent=n;$('sb-av').textContent=n[0].toUpperCase();
+  showToast('g','✓','Profile updated!');
+}
+
+function changePw(){
+  const cp=$('set-cpw').value, np=$('set-npw').value;
+  if(!cp||!np){showToast('r','⚠️','Fill both fields');return;}
+  const d=store();
+  if(dec(d.users[CU.username].pw)!==cp){showToast('r','✗','Current password incorrect');return;}
+  if(np.length<6){showToast('r','⚠️','New password min 6 chars');return;}
+  d.users[CU.username].pw=enc(np);save(d);
+  CU.pw=enc(np);
+  $('set-cpw').value='';$('set-npw').value='';
+  showToast('g','🔒','Password updated!');
+  addLog('login',CU.username,`${CU.name||CU.username} changed their password`);
+}
+
+// ════════════════════════════════ ADMIN ══════════════════════════════════════
+function renderAdmin(){
+  const d=store();
+  const users=Object.entries(d.users||{});
+  const logs=d.logs||[];
+  const allNets=users.flatMap(([u,data])=>(data.nets||[]).map(n=>({...n,owner:u})));
+
+  $('ad-total-u').textContent=users.length;
+  $('ad-active-u').textContent=Math.max(1,Math.floor(users.length*.7));
+  $('ad-total-n').textContent=allNets.length;
+  $('ad-logs-c').textContent=logs.length;
+
+  // 3 columns
+  $('admin-cols').innerHTML=`
+    <!-- Users -->
+    <div class="admin-col">
+      <div class="admin-col-hdr">
+        <div class="admin-col-title"><svg width="14" height="14" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>User Management</div>
+        <span class="sec-count">${users.length}</span>
+      </div>
+      <div class="admin-col-body">
+        ${users.map(([u,data])=>`
+          <div class="admin-row">
+            <div class="ar-left">
+              <div class="ar-av" style="background:${data.disabled?'rgba(139,148,158,.4)':'linear-gradient(135deg,var(--accent),var(--accent3))'}">
+                ${(data.name||u)[0].toUpperCase()}
+              </div>
+              <div>
+                <div class="ar-name">${data.name||u}</div>
+                <div class="ar-meta">@${u} · ${data.role||'user'}${data.disabled?' · 🔒 Disabled':''}</div>
+              </div>
+            </div>
+            <div class="ar-actions">
+              ${u!=='admin'?`
+                <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="toggleUser('${u}')">${data.disabled?'Enable':'Disable'}</button>
+                <button class="btn btn-r" style="padding:5px 10px;font-size:11px" onclick="deleteUser('${u}')">Delete</button>
+              `:'<span class="badge b-green">Admin</span>'}
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Networks -->
+    <div class="admin-col">
+      <div class="admin-col-hdr">
+        <div class="admin-col-title"><svg width="14" height="14" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M1.5 8.5C6 3.5 18 3.5 22.5 8.5"/><path d="M4.5 11.5C7.5 8 16.5 8 19.5 11.5"/><path d="M7.5 14.5C9.5 12 14.5 12 16.5 14.5"/><circle cx="12" cy="18" r="1.5" fill="currentColor"/></svg>Network Overview</div>
+        <span class="sec-count">${allNets.length}</span>
+      </div>
+      <div class="admin-col-body">
+        ${allNets.length===0?'<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No networks</div>':
+          allNets.map(n=>`
+            <div class="admin-row">
+              <div class="ar-left">
+                <div style="font-size:18px">📶</div>
+                <div>
+                  <div class="ar-name">${n.ssid}</div>
+                  <div class="ar-meta">@${n.owner} · ${n.security||'WPA2'} · ${n.signal}%</div>
+                </div>
+              </div>
+              ${statusBadge(n.status)}
+            </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Live Stats -->
+    <div class="admin-col">
+      <div class="admin-col-hdr">
+        <div class="admin-col-title"><svg width="14" height="14" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Live System Stats</div>
+        <span class="badge b-green"><span class="bd"></span>Live</span>
+      </div>
+      <div class="admin-col-body">
+        ${[
+          ['Total Users',users.length,'👥'],
+          ['Active Users',Math.max(1,Math.floor(users.length*.7)),'🟢'],
+          ['Total Networks',allNets.length,'📶'],
+          ['Log Entries',logs.length,'📜'],
+          ['Admins',users.filter(([,u])=>u.role==='admin').length,'🛡️'],
+          ['Disabled Accounts',users.filter(([,u])=>u.disabled).length,'🔒'],
+        ].map(([lbl,val,ico])=>`
+          <div class="admin-row">
+            <div class="ar-left"><span style="font-size:16px">${ico}</span><div class="ar-name">${lbl}</div></div>
+            <span style="font-size:14px;font-weight:800;color:var(--accent);font-family:var(--font-mono)">${val}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  // Full logs
+  const all=$('admin-logs-list');
+  if(all) all.innerHTML=logs.length===0?
+    `<div style="text-align:center;padding:40px;color:var(--text3)">No logs</div>`:
+    logs.map(buildLogItem).join('');
+}
+
+function toggleUser(u){
+  const d=store();
+  if(d.users[u]) d.users[u].disabled=!d.users[u].disabled;
+  save(d);
+  renderAdmin();
+  showToast('y','👤',`User @${u} ${d.users[u].disabled?'disabled':'enabled'}`);
+  addLog('warn','admin',`Admin ${d.users[u].disabled?'disabled':'enabled'} user: @${u}`);
+}
+
+function deleteUser(u){
+  if(!confirm(`Delete user @${u}? This cannot be undone.`))return;
+  const d=store(); delete d.users[u]; save(d);
+  renderAdmin();
+  showToast('r','🗑️',`User @${u} deleted`);
+  addLog('warn','admin',`Admin deleted user: @${u}`);
+}
+
+// ════════════════════════════════ NOTIFICATIONS ══════════════════════════════
+let notifQueue=[]; let notifPanelOpen=false;
+
+function fireNotif(type,ico,title,desc){
+  const panel=$('notif-panel');
+  const id='n'+Date.now();
+  const typeClass=type==='warn'?'warn':type==='err'||type==='error'?'err':'';
+  const el=document.createElement('div');
+  el.className=`notif-item ${typeClass}`;
+  el.id=id;
+  el.innerHTML=`
+    <div class="notif-ico">${ico}</div>
+    <div style="flex:1"><div class="notif-title">${title}</div><div class="notif-desc">${desc}</div></div>
+    <div class="notif-close" onclick="dismissNotif('${id}')">✕</div>
+    <div class="notif-progress"></div>`;
+  panel.prepend(el);
+  notifQueue.push(id);
+  $('notif-dot').style.display='block';
+  setTimeout(()=>dismissNotif(id),4500);
+}
+
+function dismissNotif(id){
+  const el=$(id); if(!el)return;
+  el.classList.add('leaving');
+  setTimeout(()=>{el.remove();notifQueue=notifQueue.filter(x=>x!==id);if(notifQueue.length===0)$('notif-dot').style.display='none';},400);
+}
+
+function toggleNotifPanel(){
+  // just clear all notifications
+  notifQueue.forEach(id=>dismissNotif(id));
+}
+
+// ════════════════════════════════ AI CHAT ════════════════════════════════════
+const AI_KB={
+  'slow wi-fi':'Your Wi-Fi might be slow due to: 1) Distance from router 🏠 2) Physical obstructions (walls, floors) 3) Network congestion (too many devices) 4) ISP issues 5) Outdated router firmware. Try moving closer to your router or restarting it.',
+  'slow wifi':'Your Wi-Fi might be slow due to: 1) Distance from router 🏠 2) Physical obstructions (walls, floors) 3) Network congestion (too many devices) 4) ISP issues 5) Outdated router firmware. Try moving closer to your router or restarting it.',
+  'best network':'The best network is the one with the highest signal strength AND good security (WPA3 > WPA2 > WEP > Open). In your dashboard, check the Signal % column — anything above 70% is excellent! 📶',
+  'improve signal':'To improve your Wi-Fi signal: 1) Move closer to router 📍 2) Remove obstacles 3) Use 5GHz band for speed (shorter range) or 2.4GHz for range 4) Upgrade your router 5) Use a Wi-Fi extender/mesh system',
+  'wpa3':'WPA3 is the latest Wi-Fi security protocol. It\'s more secure than WPA2 with better encryption, protection against brute-force attacks, and forward secrecy. Always choose WPA3 when available! 🔒',
+  'wpa2':'WPA2 is the current standard security protocol for Wi-Fi. It\'s generally safe for home use. However, WPA3 is newer and more secure — upgrade your router if possible.',
+  'password':'In NetPulse, your saved Wi-Fi passwords are encrypted using base64 encoding and stored only on your device. They\'re never transmitted or shared with other users. You can view them in the Networks > Saved Details section.',
+  'ping':'Ping (latency) measures how fast data travels to a server and back, in milliseconds (ms). Lower is better! Under 20ms = excellent, 20-50ms = good, 50-100ms = okay, 100ms+ = poor for gaming/video calls.',
+  'connect':'To connect to a network in NetPulse: 1) Go to Networks tab 2) Click "Connect" next to any saved network. Or scan for new networks and add them first.',
+  'hello':'Hi there! 👋 I\'m NetPulse AI. I can help with Wi-Fi troubleshooting, explain network concepts, or guide you through the dashboard. What would you like to know?',
+  'hi':'Hello! 👋 I\'m your NetPulse AI assistant. Ask me anything about networks, Wi-Fi speeds, or how to use the dashboard!',
+  'help':'I can help you with: 📶 Wi-Fi troubleshooting • ⚡ Speed optimization • 🔒 Network security • 📡 Understanding signals • 🛠️ Using NetPulse features. Just ask!'
+};
+
+let chatOpen=false;
+function toggleChat(){
+  chatOpen=!chatOpen;
+  $('chat-panel').classList.toggle('open',chatOpen);
+  $('chat-fab').classList.toggle('open',chatOpen);
+}
+
+function chatAsk(q){$('chat-input').value=q;sendChat();}
+
+function sendChat(){
+  const inp=$('chat-input');
+  const msg=inp.value.trim(); if(!msg)return;
+  inp.value='';
+  appendChatMsg(msg,'user');
+  $('chat-quick').style.display='none';
+  setTimeout(()=>{
+    const reply=getAIReply(msg.toLowerCase());
+    appendChatMsg(reply,'ai');
+  },600+Math.random()*400);
+}
+
+function appendChatMsg(text,role){
+  const msgs=$('chat-msgs');
+  const div=document.createElement('div');
+  div.className=`cmsg ${role}`;
+  div.textContent=text;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function getAIReply(q){
+  for(const [key,ans] of Object.entries(AI_KB)){
+    if(q.includes(key)) return ans;
+  }
+  // Context-aware fallback
+  const nets=CU?getUserNets():[];
+  const conn=nets.find(n=>n.status==='connected');
+  if(q.includes('connected')||q.includes('current network'))
+    return conn?`You're currently connected to "${conn.ssid}" with ${conn.signal}% signal strength and ${conn.security} security.`:'You\'re not connected to any network. Go to Networks to connect!';
+  if(q.includes('how many network'))
+    return `You have ${nets.length} saved network(s) in your dashboard.`;
+  return "I'm not sure about that specific question, but I'm here to help! Try asking about Wi-Fi speed, signal strength, security types, or how to use NetPulse features. 🤖";
+}
+
+// ════════════════════════════════ TOAST ══════════════════════════════════════
+let toastT=null;
+function showToast(type,ico,txt){
+  const el=$('toast'); const tmap={g:'ts-g',r:'ts-r',y:'ts-y',b:'ts-b'};
+  el.className=`toast show ${tmap[type]||''}`;
+  $('t-ico').textContent=ico;$('t-txt').textContent=txt;
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>el.classList.remove('show'),3200);
+}
+
+// ════════════════════════════════ PARTICLES ══════════════════════════════════
+function spawnParticles(){
+  const c=$('auth-particles'); if(!c)return;
+  for(let i=0;i<12;i++){
+    const p=document.createElement('div');
+    p.className='auth-particle';
+    const s=rand(4,12);
+    p.style.cssText=`width:${s}px;height:${s}px;left:${rand(0,100)}%;background:rgba(0,200,150,${(.05+Math.random()*.1).toFixed(2)});animation-duration:${rand(8,18)}s;animation-delay:${rand(0,8)}s`;
+    c.appendChild(p);
+  }
+}
+
+// ════════════════════════════════ KEYBOARD SHORTCUTS ════════════════════════
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    if(document.activeElement.id==='lu'||document.activeElement.id==='lp') doLogin();
+    if(document.activeElement.id==='su'||document.activeElement.id==='sp'||document.activeElement.id==='sn') doSignup();
+  }
+  if(e.key==='Escape'){
+    document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
+    if(chatOpen) toggleChat();
+  }
+});
+
+// close modal on overlay click
+document.querySelectorAll('.modal-ov').forEach(ov=>{
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');});
+});
+
+// ════════════════════════════════ BOOT ═══════════════════════════════════════
+initStore();
+spawnParticles();
+// periodic speed updates if logged in
+setInterval(()=>{if(CU){runSpeedTestSilent();}},35000);
+// periodic new-network notification
+setInterval(()=>{
+  if(CU&&Math.random()>.7){
+    const names=['Neighbor_5G','CafeWifi_New','IoT_Device_42'];
+    fireNotif('info','📡','New Network Detected',`"${names[rand(0,names.length-1)]}" is now in range`);
+  }
+},45000);
+</script>
+</body>
+</html>
